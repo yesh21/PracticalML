@@ -34,7 +34,7 @@ training <- read.csv("C:/Users/Yaswanth Pulavarthi/Downloads/pml-training.csv",n
 testing <- read.csv("C:/Users/Yaswanth Pulavarthi/Downloads/pml-testing.csv",na.strings=c("NA","#DIV/0!", ""))
 ```
 
-# cleaning data
+### cleaning data
 
 ```{r clean, }
 training<-training[,colSums(is.na(training)) == 0]
@@ -42,13 +42,14 @@ testing <-testing[,colSums(is.na(testing)) == 0]
 
 ```
 
-# subsetting data
+### subsetting data
 ```{r subset,}
 training   <-training[,-c(1:7)]
 testing <-testing[,-c(1:7)]
+training$classe<-as.factor(training$classe)
 ```
 
-## crossValidation set
+### crossValidation set
 ```{r crossval, }
 subSamples <- createDataPartition(y=training$classe, p=0.75, list=FALSE)
 subTraining <- training[subSamples, ] 
@@ -63,6 +64,45 @@ The expected out-of-sample error will correspond to the quantity: 1-accuracy in 
 barplot(table(subTraining$classe))
 ```
 LEVEL A occurs most. D appears to be the least frequent one
+
+
+## Prediction models
+
+
+### Decision tree
+```{r decisiontree, echo=TRUE}
+# Model Fit
+modFitDTree <- rpart(classe ~ ., data=subTraining, method="class")
+# prediction
+predictDTree <- predict(modFitDTree, subTesting, type = "class")
+# Plot 
+rpart.plot(modFitDTree, main="Classification Tree", extra=102, under=TRUE, faclen=0)
+```
+
+```{r decisiontreecm, echo=TRUE}
+confusionMatrix(predictDTree, as.factor(subTesting$classe))
+```
+
+
+
+
+### Random forest 
+```{r randomforest, echo=TRUE}
+modFitRForest <- randomForest(classe ~ ., data=subTraining, method="class")
+predictRForest <- predict(modFitRForest, subTesting, type = "class")
+```
+
+```{r RandomForestcm, echo=TRUE}
+confusionMatrix(predictRForest, subTesting$classe)
+```
+
+
+## Conclusion
+Random Forest Algorithm had more than 99 precentage of accuracy.So, it is more enough to predict the final testing model.
+```{r finalresults, }
+finalClassePRED <- predict(modFitRForest, testing)
+print(finalClassePRED)
+```
 
 
 
